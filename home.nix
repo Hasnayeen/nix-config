@@ -2,12 +2,16 @@
 
 {
   fonts.fontconfig.enable = true;
+  fonts.fontconfig.defaultFonts.sansSerif = [ "Noto Sans" "Noto Sans Bengali" ];
   home.username = "hasnayeen";
   home.homeDirectory = "/home/hasnayeen";
   home.stateVersion = "25.11";
   home.packages = [
+    # cli
+    pkgs.wget
     pkgs.git
-    pkgs.nixd
+    pkgs.wezterm
+    pkgs.ghostty
     pkgs.nushell
     pkgs.starship
     pkgs.fzf
@@ -20,34 +24,63 @@
     pkgs.gnome-extension-manager
     pkgs.wmctrl
     pkgs.imagemagick
+    pkgs.xclip
+    pkgs.witr # why a process/service/program is running
 
+    # dev
     pkgs.direnv
     pkgs.nix-direnv
     pkgs.python3
     pkgs.nodejs
     pkgs.pnpm
-
     pkgs.frankenphp
+    pkgs.nixd
 
-    pkgs.wezterm
+    # ai
     pkgs.claude-code
-
+    pkgs.llmfit
     inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.tuicr
 
+    pkgs.ollama-cpu
+
+    # desktop app
     pkgs.zed-editor
     pkgs.vscode
     pkgs.beekeeper-studio
-
+    pkgs.brave
     pkgs.graphite
-
-    pkgs.kooha
     pkgs.proton-vpn
+    pkgs.obsidian
 
+    # kooha
+    pkgs.kooha
+    pkgs.gst_all_1.gstreamer
+    pkgs.gst_all_1.gst-plugins-base
+    pkgs.gst_all_1.gst-plugins-good
+    pkgs.gst_all_1.gst-plugins-bad
+    pkgs.gst_all_1.gst-plugins-ugly
+    pkgs.gst_all_1.gst-libav
+    # pkgs.gst_all_1.gst-vaapi
+
+    # fonts
     pkgs.nerd-fonts.jetbrains-mono
+    pkgs.noto-fonts
+    pkgs.noto-fonts-cjk-sans
+    pkgs.lohit-fonts.bengali
   ];
 
-  # home.sessionVariables = {
-  # };
+  home.sessionVariables = {
+    GST_PLUGIN_SYSTEM_PATH_1_0 = with pkgs.gst_all_1;
+      pkgs.lib.concatStringsSep ":" [
+        "${gstreamer}/lib/gstreamer-1.0"
+        "${gst-plugins-base}/lib/gstreamer-1.0"
+        "${gst-plugins-good}/lib/gstreamer-1.0"
+        "${gst-plugins-bad}/lib/gstreamer-1.0"
+        "${gst-plugins-ugly}/lib/gstreamer-1.0"
+        "${gst-libav}/lib/gstreamer-1.0"
+        # "${gst-vaapi}/lib/gstreamer-1.0"
+      ];
+  };
 
   programs.direnv = {
       enable = true;
@@ -65,6 +98,18 @@
       init.defaultBranch = "main";
     };
   };
+
+  programs.nushell.extraEnv = ''
+    let gst_paths = [
+      "${pkgs.gst_all_1.gstreamer}/lib/gstreamer-1.0"
+      "${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0"
+      "${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0"
+      "${pkgs.gst_all_1.gst-plugins-bad}/lib/gstreamer-1.0"
+      "${pkgs.gst_all_1.gst-plugins-ugly}/lib/gstreamer-1.0"
+      "${pkgs.gst_all_1.gst-libav}/lib/gstreamer-1.0"
+    ]
+    $env.GST_PLUGIN_SYSTEM_PATH_1_0 = ($gst_paths | append ($env.GST_PLUGIN_SYSTEM_PATH_1_0? | default "") | str join ":")
+  '';
 
   systemd.user.services.frankenphp-run = {
     Unit = {
@@ -116,4 +161,8 @@
   xdg.mimeApps.defaultApplications = {
     "x-scheme-handler/paper" = "paper.desktop";
   };
+
+  xdg.configFile."environment.d/10-gstreamer.conf".text = ''
+    GST_PLUGIN_SYSTEM_PATH_1_0=/etc/profiles/per-user/hasnayeen/lib/gstreamer-1.0
+  '';
 }

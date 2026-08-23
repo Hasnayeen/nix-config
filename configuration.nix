@@ -24,6 +24,12 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  fileSystems."/mnt/files" = {
+    device = "/dev/disk/by-uuid/162fa1b7-8c15-4703-a527-7c021fd4dc3c";
+    fsType = "ext4";
+    options = [ "defaults" "nofail" ];
+  };
+
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 

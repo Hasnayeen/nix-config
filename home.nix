@@ -51,6 +51,7 @@
     pkgs.graphite
     pkgs.proton-vpn
     pkgs.obsidian
+    pkgs.blender
 
     # kooha
     pkgs.kooha
@@ -70,6 +71,7 @@
   ];
 
   home.sessionVariables = {
+    OLLAMA_MODELS = "/mnt/files/llm-models";
     GST_PLUGIN_SYSTEM_PATH_1_0 = with pkgs.gst_all_1;
       pkgs.lib.concatStringsSep ":" [
         "${gstreamer}/lib/gstreamer-1.0"

@@ -1,6 +1,21 @@
 { config, pkgs, inputs, ... }:
-
+let
+  androidComposition = pkgs.androidenv.composeAndroidPackages {
+    platformVersions = [ "36" ];
+    buildToolsVersions = [ "35.0.0" ];
+    cmakeVersions = [ "3.22.1" ];
+    includeEmulator = true;
+    includeSystemImages = true;
+    includeNDK = true;
+    ndkVersions = [ "27.0.12077973" ];
+    systemImageTypes = [ "google_apis" ];
+    abiVersions = [ "x86_64" ];
+  };
+in
 {
+  imports = [
+    (import /home/hasnayeen/.config/nix-config/modules/nushell.nix { inherit config pkgs androidComposition; })
+  ];
   fonts.fontconfig.enable = true;
   fonts.fontconfig.defaultFonts.sansSerif = [ "Noto Sans" "Noto Sans Bengali" ];
   home.username = "hasnayeen";
@@ -8,10 +23,15 @@
   home.stateVersion = "25.11";
   home.packages = [
     # cli
+    pkgs.dig
     pkgs.wget
     pkgs.git
+    pkgs.hunk # diff viewer
+    pkgs.unzip
+    pkgs.openssl
     pkgs.wezterm
-    pkgs.ghostty
+    pkgs.herdr
+    pkgs.zellij
     pkgs.nushell
     pkgs.starship
     pkgs.fzf
@@ -26,18 +46,29 @@
     pkgs.imagemagick
     pkgs.xclip
     pkgs.witr # why a process/service/program is running
+    pkgs.bubblewrap
+    pkgs.watchman
+    pkgs.websocat
 
     # dev
     pkgs.direnv
     pkgs.nix-direnv
     pkgs.python3
+    pkgs.uv
     pkgs.nodejs
     pkgs.pnpm
     pkgs.frankenphp
     pkgs.nixd
+    pkgs.python314Packages.pywatchman
+
+    pkgs.jdk
+    pkgs.jadx
+    androidComposition.androidsdk
+    pkgs.apktool
 
     # ai
     pkgs.claude-code
+    pkgs.amp-cli
     pkgs.llmfit
     inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.tuicr
 
@@ -52,6 +83,8 @@
     pkgs.proton-vpn
     pkgs.obsidian
     pkgs.blender
+    pkgs.mpv
+    pkgs.smplayer
 
     # kooha
     pkgs.kooha
@@ -101,18 +134,6 @@
     };
   };
 
-  programs.nushell.extraEnv = ''
-    let gst_paths = [
-      "${pkgs.gst_all_1.gstreamer}/lib/gstreamer-1.0"
-      "${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0"
-      "${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0"
-      "${pkgs.gst_all_1.gst-plugins-bad}/lib/gstreamer-1.0"
-      "${pkgs.gst_all_1.gst-plugins-ugly}/lib/gstreamer-1.0"
-      "${pkgs.gst_all_1.gst-libav}/lib/gstreamer-1.0"
-    ]
-    $env.GST_PLUGIN_SYSTEM_PATH_1_0 = ($gst_paths | append ($env.GST_PLUGIN_SYSTEM_PATH_1_0? | default "") | str join ":")
-  '';
-
   systemd.user.services.frankenphp-run = {
     Unit = {
       Description = "Run frankenphp on session start";
@@ -157,6 +178,25 @@
     type = "Application";
     icon = "Paper App Icon 512";
     mimeType = [ "x-scheme-handler/paper" ];
+    terminal = false;
+  };
+
+  xdg.desktopEntries.commandcode = {
+    name = "CommandCode";
+    comment = "AI coding agent";
+    exec = "${pkgs.lib.strings.escapeShellArg "/home/Applications/CommandCode.AppImage"} %u";
+    type = "Application";
+    icon = "commandcode";
+    terminal = false;
+  };
+
+
+  xdg.desktopEntries.opencode = {
+    name = "OpenCode";
+    comment = "AI coding agent";
+    exec = "${pkgs.lib.strings.escapeShellArg "/home/Applications/opencode.AppImage"} %u";
+    type = "Application";
+    icon = "opencode";
     terminal = false;
   };
 

@@ -33,13 +33,21 @@
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
+  # dnsmasq answers *.test for this machine (via loopback) and for other
+  # devices on the phone hotspot (via the Wi-Fi interface). The hotspot IP is
+  # DHCP-assigned; if the hotspot subnet changes, update the IP in the
+  # "address" line below AND the static DNS set on the phone.
   services.dnsmasq = {
     enable = true;
     settings = {
       address = "/.test/127.0.0.1";
       domain = "test";
       local = "/test/";
-      listen-address = "127.0.0.1";
+      listen-address = [
+        "127.0.0.1"
+      ];
+      # interface = "wlp0s20f3";
+      # bind-dynamic = true;
       server = [ "8.8.8.8" "8.8.4.4" "1.1.1.1" ];
     };
   };
@@ -93,6 +101,11 @@
     enable = true;
     nssmdns4 = true;
     openFirewall = true;
+    publish = {
+      enable = true;
+      addresses = true;
+      workstation = true;
+    };
   };
 
   # Enable sound with pipewire.
@@ -137,7 +150,7 @@
   users.users.hasnayeen = {
     isNormalUser = true;
     description = "hasnayeen";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "networkmanager" "wheel" "kvm" ];
     shell = pkgs.nushell;
     packages = with pkgs; [
     #  thunderbird
@@ -155,7 +168,12 @@
   };
 
   # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config = {
+    allowUnfree = true;
+    android_sdk.accept_license = true;
+  };
+
+  nixpkgs.config.permittedInsecurePackages = ["beekeeper-studio-6.0.5"];
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -178,11 +196,19 @@
   # List services that you want to enable:
 
   # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
+  services.openssh.enable = true;
 
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
+  # Keep Wi-Fi alive with lid closed: don't suspend on lid switch.
+  services.logind.settings.Login = {
+    HandleLidSwitch = "ignore";
+    HandleLidSwitchDocked = "ignore";
+    HandleLidSwitchExternalPower = "ignore";
+  };
+
+  # Open ports in the firewall. 53 is dnsmasq, so phones on the hotspot can
+  # resolve *.test domains.
+  networking.firewall.allowedTCPPorts = [ 80 443 300 5173 5174 8000 8082 21118 ];
+  # networking.firewall.allowedUDPPorts = [ 53 ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
